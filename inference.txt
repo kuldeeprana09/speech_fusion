@@ -1,0 +1,43 @@
+echo "start"
+
+
+echo "\n 0. Inference"
+
+python tools/align_audio_level.py --inDir /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/mix
+
+echo "\n 1. create input.scp"
+
+sh gen_scp.sh /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/mix /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/mix.scp
+
+
+echo "\n 2. denoise test dataset"
+
+nnet/separate.py /media/lab70809/Data02/dataA_save_model --input /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/mix.scp --gpu 0 --fs 16000 --dump-dir /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt
+
+
+echo "\n 3. create denoised list spk1.scp"
+
+sh gen_scp.sh /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/spk1 /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/spk1.scp
+
+echo "\n create target list target.scp
+sh gen_scp.sh /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/s1 /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/target.scp
+
+echo "\n 4. compute Si-SDR"
+
+nnet/compute_si_snr.py /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/spk1.scp /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/target.scp /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/mix.scp yes
+
+
+nnet/separate.py /media/lab70809/Data02/dataA_save_model --input /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/mix.scp --gpu 0 > separate.log 2>&1 &
+
+./nnet/compute_si_snr.py /path/to/ref_spk1.scp,/path/to/ref_spk2.scp /path/to/inf_spk1.scp,/path/to/inf_spk2.scp
+
+
+nnet/compute_si_snr.py /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/spk1.scp,/media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr/tt/spk2.scp /media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr_noise_v5/tt/denoised/spk1.scp,/media/lab70809/Data01/speech_donoiser_new/datasets/ner-300hr_noise_v5/tt/denoised/spk2.scp
+
+
+python nnet/separate_new.py /media/HDD10TB/wthong_DATA/iptcloud_denoiser/MB_save_model45 --input /media/HDD10TB/wthong_DATA/iptcloud_denoiser/datasets/real_testdata/real_testdata.scp --gpu 1 --fs 16000 --dump-dir /media/HDD10TB/wthong_DATA/iptcloud_denoiser/datasets/real_testdata/enhancement
+
+sh gen_scp.sh /media/HDD10TB/wthong_DATA/iptcloud_denoiser/datasets/real_testdata /media/HDD10TB/wthong_DATA/iptcloud_denoiser/datasets/real_testdata/real_testdata.scp
+
+
+nnet/compute_si_snr.py /media/HDD10TB/wthong_DATA/iptcloud_denoiser/datasets/ner-300hr/MUStt/spk1.scp /media/HDD10TB/wthong_DATA/iptcloud_denoiser/datasets/ner-300hr/MUStt/s1.scp /media/HDD10TB/wthong_DATA/iptcloud_denoiser/datasets/ner-300hr/MUStt/mix.scp
